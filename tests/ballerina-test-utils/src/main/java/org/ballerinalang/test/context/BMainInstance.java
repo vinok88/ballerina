@@ -30,8 +30,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -175,18 +180,18 @@ public class BMainInstance implements BMain {
     }
 
     private synchronized void addJavaAgents(Map<String, String> envProperties) throws BallerinaTestException {
-        String javaOpts = "";
-        if (envProperties.containsKey(JAVA_OPTS)) {
-            javaOpts = envProperties.get(JAVA_OPTS);
-        }
-        if (javaOpts.contains("jacoco.agent")) {
-            return;
-        }
-        javaOpts = agentArgs + javaOpts;
-        if ("".equals(javaOpts)) {
-            return;
-        }
-        envProperties.put(JAVA_OPTS, javaOpts);
+//        String javaOpts = "";
+//        if (envProperties.containsKey(JAVA_OPTS)) {
+//            javaOpts = envProperties.get(JAVA_OPTS);
+//        }
+//        if (javaOpts.contains("jacoco.agent")) {
+//            return;
+//        }
+//        javaOpts = agentArgs + javaOpts;
+//        if ("".equals(javaOpts)) {
+//            return;
+//        }
+//        envProperties.put(JAVA_OPTS, javaOpts);
     }
 
     /**
@@ -213,13 +218,18 @@ public class BMainInstance implements BMain {
 
             if (Utils.getOSName().toLowerCase(Locale.ENGLISH).contains("windows")) {
                 cmdArray = new String[]{"cmd.exe", "/c", balServer.getServerHome() +
-                        File.separator + "bin" + File.separator + scriptName + ".bat", command};
+                        File.separator + "bin" + File.separator + scriptName + ".bat", "build"};
             } else {
                 cmdArray = new String[]{"bash", balServer.getServerHome() +
-                        File.separator + "bin/" + scriptName, command};
+                        File.separator + "bin/" + scriptName, "build"};
             }
 
-            String[] cmdArgs = Stream.concat(Arrays.stream(cmdArray), Arrays.stream(args)).toArray(String[]::new);
+            Path jarLocation = Files.createTempDirectory("temp");
+//            List<String> argsList = Arrays.asList(args);
+            String[] outputDir = new String[]{"-o", jarLocation.toString()};
+            String[] argsArray = Stream.concat(Arrays.stream(args), Arrays.stream(outputDir)).toArray(String[]::new);
+            String[] cmdArgs =
+                    Stream.concat(Arrays.stream(cmdArray), Arrays.stream(argsArray)).toArray(String[]::new);
             ProcessBuilder processBuilder = new ProcessBuilder(cmdArgs).directory(new File(commandDir));
             if (envProperties != null) {
                 Map<String, String> env = processBuilder.environment();
@@ -227,7 +237,7 @@ public class BMainInstance implements BMain {
                     env.put(entry.getKey(), entry.getValue());
                 }
             }
-
+            processBuilder.redirectErrorStream();
             Process process = processBuilder.start();
 
             ServerLogReader serverInfoLogReader = new ServerLogReader("inputStream", process.getInputStream());
@@ -245,6 +255,47 @@ public class BMainInstance implements BMain {
                         break;
                 }
             }
+            serverInfoLogReader.start();
+            serverErrorLogReader.start();
+            if (clientArgs != null && clientArgs.length > 0) {
+                writeClientArgsToProcess(clientArgs, process);
+            }
+            process.waitFor();
+
+            if (Utils.getOSName().toLowerCase(Locale.ENGLISH).contains("windows")) {
+                cmdArray = new String[]{"cmd.exe", "/c", balServer.getServerHome() +
+                        File.separator + "bin" + File.separator + scriptName + ".bat", command};
+            } else {
+                cmdArray = new String[]{"bash", balServer.getServerHome() +
+                        File.separator + "bin/" + scriptName, command};
+            }
+
+            Path jarPath = Paths.get(jarLocation.toString(), getJarNameFromBal(args[0]));
+            args[0] = jarPath.toString();
+
+            cmdArgs =
+                    Stream.concat(Arrays.stream(cmdArray), Arrays.stream(args)).toArray(String[]::new);
+            processBuilder = new ProcessBuilder(cmdArgs).directory(new File(commandDir));
+
+            process = processBuilder.start();
+
+            serverInfoLogReader = new ServerLogReader("inputStream", process.getInputStream());
+            serverErrorLogReader = new ServerLogReader("errorStream", process.getErrorStream());
+
+            if (leechers == null) {
+                leechers = new LogLeecher[]{};
+            }
+            for (LogLeecher leecher : leechers) {
+                switch (leecher.getLeecherType()) {
+                    case INFO:
+                        serverInfoLogReader.addLeecher(leecher);
+                        break;
+                    case ERROR:
+                        serverErrorLogReader.addLeecher(leecher);
+                        break;
+                }
+            }
+
             serverInfoLogReader.start();
             serverErrorLogReader.start();
             if (clientArgs != null && clientArgs.length > 0) {
@@ -359,5 +410,11 @@ public class BMainInstance implements BMain {
         }
         writer.flush();
         writer.close();
+    }
+
+    private String getJarNameFromBal(String balPath) {
+        assert balPath.endsWith(".bal") : "Invalid file extention, expected '.bal'";
+        String fileName = Paths.get(balPath).getFileName().toString();
+        return fileName.substring(0, fileName.lastIndexOf(".bal")).concat(".jar");
     }
 }
