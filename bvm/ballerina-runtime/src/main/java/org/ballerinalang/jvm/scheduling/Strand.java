@@ -27,7 +27,6 @@ import org.ballerinalang.jvm.values.FutureValue;
 import org.ballerinalang.jvm.values.MapValue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -263,7 +262,9 @@ public class Strand {
     }
 
     public void updateChannelDetails(ChannelDetails[] channels) {
-        this.channelDetails.addAll(Arrays.asList(channels));
+        for (ChannelDetails channelDetails : channels) {
+            this.channelDetails.add(channelDetails);
+        }
     }
 
     private WorkerDataChannel getWorkerDataChannel(ChannelDetails channel) {
