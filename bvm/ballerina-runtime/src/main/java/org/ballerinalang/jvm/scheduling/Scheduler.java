@@ -50,7 +50,7 @@ import static org.ballerinalang.jvm.scheduling.SchedulerItem.POISON_PILL;
  */
 public class Scheduler {
 
-    private PrintStream error = System.err;
+    private PrintStream err = System.err;
     /**
      * Scheduler does not get killed if the immortal value is true. Specific to services.
      */
@@ -79,7 +79,7 @@ public class Scheduler {
         } catch (Throwable t) {
             // Log and continue with default
             poolSize = Runtime.getRuntime().availableProcessors() * 2;
-            error.println("ballerina: error occurred in scheduler while reading system variable:" +
+            err.println("ballerina: error occurred in scheduler while reading system variable:" +
                     BLangConstants.BALLERINA_MAX_POOL_SIZE_ENV_VAR + ", " + t.getMessage());
         }
         this.numThreads = poolSize;
@@ -233,7 +233,6 @@ public class Scheduler {
                     if (waitContext.runnable) {
                         waitContext.completed = true;
                         reschedule(item);
-                    } else {
                     }
                     waitContext.unLock();
                     break;
