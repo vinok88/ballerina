@@ -77,6 +77,12 @@ public class StringValueBasicsTest {
         Assert.assertEquals(((BValueArray) returns[0]).getStringArray()[0], "h😀llo");
     }
 
+    @Test
+    public void testObjects() {
+        BValue[] returns = BRunUtil.invoke(result, "testObjects");
+        Assert.assertTrue(returns[0].stringValue().contains("h😀llo"));
+    }
+
     @AfterClass
     public void down() {
         System.clearProperty(IS_STRING_VALUE_PROP);

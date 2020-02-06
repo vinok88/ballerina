@@ -868,7 +868,9 @@ function generateCastToFloat(jvm:MethodVisitor mv, bir:BType sourceType) {
 }
 
 function generateCastToString(jvm:MethodVisitor mv, bir:BType sourceType, boolean useBString = false) {
+    io:println("using cast to string");
     if (sourceType is bir:BTypeString) {
+        io:println("using cast to string");
         // do nothing
     } else if (sourceType is bir:BTypeInt) {
         mv.visitMethodInsn(INVOKESTATIC, LONG_VALUE, "toString", io:sprintf("(J)L%s;", STRING_VALUE), false);
