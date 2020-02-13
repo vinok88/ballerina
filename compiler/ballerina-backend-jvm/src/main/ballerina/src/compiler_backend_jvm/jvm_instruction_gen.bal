@@ -734,7 +734,7 @@ type InstructionGenerator object {
         self.storeToVar(mapLoadIns.lhsOp.variableDcl);
     }
 
-    function generateObjectLoadIns(bir:FieldAccess objectLoadIns) {
+    function generateObjectLoadIns(bir:FieldAccess objectLoadIns, boolean useBString) {
         // visit object_ref
         self.loadVar(objectLoadIns.rhsOp.variableDcl);
         bir:BType varRefType = objectLoadIns.rhsOp.variableDcl.typeValue;
@@ -744,7 +744,7 @@ type InstructionGenerator object {
 
         // invoke get() method, and unbox if needed
         self.mv.visitMethodInsn(INVOKEINTERFACE, OBJECT_VALUE, "get",
-                io:sprintf("(L%s;)L%s;", STRING_VALUE, OBJECT), true);
+                io:sprintf("(L%s;)L%s;", useBString ? B_STRING_VALUE : STRING_VALUE, OBJECT), true);
         bir:BType targetType = objectLoadIns.lhsOp.variableDcl.typeValue;
         addUnboxInsn(self.mv, targetType);
 

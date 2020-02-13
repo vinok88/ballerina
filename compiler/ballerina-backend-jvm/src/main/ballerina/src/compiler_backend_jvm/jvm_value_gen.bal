@@ -74,10 +74,10 @@ public type ObjectGenerator object {
         if (IS_BSTRING) {
             self.createObjectGetMethod(cw, fields, className, true);
             self.createObjectSetMethod(cw, fields, className, true);
-        } else {
+        }
         self.createObjectGetMethod(cw, fields, className, false);
         self.createObjectSetMethod(cw, fields, className, false);
-        }
+        
         self.createLambdas(cw);
 
         cw.visitEnd();
@@ -233,13 +233,13 @@ public type ObjectGenerator object {
     private function createObjectGetMethod(jvm:ClassWriter cw, bir:BObjectField?[] fields, string className,
                                            boolean useBString) {
         jvm:MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "get",
-                io:sprintf("(L%s;)L%s;", useBString ? I_STRING_VALUE : STRING_VALUE, OBJECT), (), ());
+                io:sprintf("(L%s;)L%s;", useBString ? B_STRING_VALUE : STRING_VALUE, OBJECT), (), ());
         mv.visitCode();
 
         int fieldNameRegIndex = 1;
         if(useBString) {
             mv.visitVarInsn(ALOAD, 0);
-             mv.visitMethodInsn(INVOKEINTERFACE, I_STRING_VALUE, "getValue", io:sprintf("()L%s;", STRING_VALUE) , true);
+             mv.visitMethodInsn(INVOKEINTERFACE, B_STRING_VALUE, "getValue", io:sprintf("()L%s;", STRING_VALUE) , true);
              fieldNameRegIndex = 2;
              mv.visitVarInsn(ASTORE, fieldNameRegIndex);
          }

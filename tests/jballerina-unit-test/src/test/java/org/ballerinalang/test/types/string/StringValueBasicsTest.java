@@ -90,6 +90,12 @@ public class StringValueBasicsTest {
         BRunUtil.invoke(result, "testStringIndexAccessException");
     }
 
+    @Test
+    public void testObjects() {
+        BValue[] returns = BRunUtil.invoke(result, "testObjects");
+        Assert.assertTrue(returns[0].stringValue().contains("h😀llo"));
+    }
+
     @AfterClass
     public void down() {
         System.clearProperty(IS_STRING_VALUE_PROP);

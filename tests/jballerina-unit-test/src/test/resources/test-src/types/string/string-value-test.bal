@@ -55,3 +55,25 @@ function testStringIndexAccessException() {
     string val = hello[6];
 }
 
+type Person object {
+    string helloField = "h🤷llo";
+    string lastName;
+
+    function __init(string last) {
+        self.lastName = last;
+    }
+
+    function appendName(string append) returns string {
+        return self.helloField;
+    }
+};
+
+
+public function main() {
+}
+
+function testObjects() returns string {
+ Person p = new("h😀llo");
+ return p.appendName("h😀llo");
+
+}
